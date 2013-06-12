@@ -1,7 +1,7 @@
 {
   "name": "angular-smart-table",
   "description": "A grid/table module for angular js",
-  "version": "0.1.1-kanso.1",
+  "version": "0.1.1-kanso.2",
   "categories": ["Frontend", "Forms"],
   "url": "http://lorenzofox3.github.io/smart-table-website/",
   "maintainers": [
