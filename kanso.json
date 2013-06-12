@@ -1,7 +1,7 @@
 {
   "name": "angular-smart-table",
   "description": "A grid/table module for angular js",
-  "version": "0.1.1-kanso.2",
+  "version": "0.1.1-kanso.3",
   "categories": ["Frontend", "Forms"],
   "url": "http://lorenzofox3.github.io/smart-table-website/",
   "maintainers": [
@@ -19,9 +19,10 @@
     "url": "git://github.com/lorenzofox3/bower-smart-table.git"
   },
   "dependencies": {
+    "modules": ">=0.0.8",
     "angular": "1.0.x"
   },
-  "modules": "Smart-Table.debug.js",
+  "modules": "smart-table.js",
   "modules_attachment": false,
   "gitHead": "5ada7142a624285aff4d44a90d164fe8dd2d6ba8"
 }
