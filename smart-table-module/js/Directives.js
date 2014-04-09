@@ -32,7 +32,11 @@
                             }
                         } else {
                             //add selection box column if required
-                            ctrl.insertColumn({cellTemplateUrl: templateList.selectionCheckbox, headerTemplateUrl: templateList.selectAllCheckbox, isSelectionColumn: true}, 0);
+                            ctrl.insertColumn({
+                                cellTemplateUrl: templateList.selectionCheckbox,
+                                headerTemplateUrl: templateList.selectAllCheckbox,
+                                isSelectionColumn: true
+                            }, 0);
                         }
                     }, true);
 
@@ -40,6 +44,15 @@
                     scope.$watch('columnCollection', function (oldValue, newValue) {
 
                         ctrl.clearColumns();
+
+                        //add selection box column if required
+                        if (scope.selectionMode === 'multiple' && scope.displaySelectionCheckbox === true) {
+                            ctrl.insertColumn({
+                                cellTemplateUrl: templateList.selectionCheckbox,
+                                headerTemplateUrl: templateList.selectAllCheckbox,
+                                isSelectionColumn: true
+                            }, 0);
+                        }
 
                         if (scope.columnCollection) {
                             for (var i = 0, l = scope.columnCollection.length; i < l; i++) {
