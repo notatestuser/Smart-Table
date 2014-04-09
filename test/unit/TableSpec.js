@@ -159,6 +159,37 @@ describe('Table module', function () {
                     expect(scope.columns[3].id).toBe(3);
                 });
             });
+
+            describe('clear columns', function () {
+
+                beforeEach(function () {
+                    //insert few columns
+                    scope.columns = [];
+
+                    ctrl.insertColumn({id: 0});
+                    ctrl.insertColumn({id: 1});
+                    ctrl.insertColumn({id: 2});
+                    ctrl.insertColumn({id: 3});
+                    ctrl.insertColumn({id: 4});
+                });
+
+                it('should remove all columns', function () {
+                    expect(scope.columns.length).toBe(5);
+                    ctrl.clearColumns();
+                    expect(scope.columns.length).toBe(0);
+                });
+
+                it('should have columns when adding after clear', function () {
+                    ctrl.clearColumns();
+                    ctrl.insertColumn({id: 7});
+                    ctrl.insertColumn({id: 8});
+                    ctrl.insertColumn({id: 9});
+                    expect(scope.columns[0].id).toBe(7);
+                    expect(scope.columns[1].id).toBe(8);
+                    expect(scope.columns[2].id).toBe(9);
+                });
+
+            });
         });
 
         describe('Row API', function () {
@@ -448,11 +479,6 @@ describe('Table module', function () {
         });
 
         describe('search data rows', function () {
-            var refArray = [
-                {id: 0, secondProperty: true, thirdProperty: 2},
-                {id: 1, secondProperty: true, thirdProperty: 3},
-                {id: 2, secondProperty: true, thirdProperty: 1}
-            ];
 
             beforeEach(function () {
                 scope.itemsByPage = 10;
@@ -464,6 +490,18 @@ describe('Table module', function () {
                 ctrl.insertColumn({map: 'id', isSortable: true});
                 ctrl.insertColumn({map: 'secondProperty', isSortable: false});
                 ctrl.insertColumn({map: 'thirdProperty', isSortable: true});
+            });
+
+            it('should not filter items with a null property by default', function () {
+                scope.dataCollection.push({id: 4, secondProperty: true, thirdProperty: null});
+                ctrl.search('');
+                expect(scope.displayedCollection.length).toBe(4);
+                expect(scope.displayedCollection).toEqual([
+                    {id: 0, secondProperty: true, thirdProperty: 2},
+                    {id: 1, secondProperty: true, thirdProperty: 3},
+                    {id: 2, secondProperty: true, thirdProperty: 1},
+                    {id: 4, secondProperty: true, thirdProperty: null}
+                ]);
             });
 
             it('should search globally if we dont specify a proper cololumn', function () {
@@ -509,54 +547,69 @@ describe('Table module', function () {
         describe('update data row', function () {
             beforeEach(function () {
                 scope.displayedCollection = scope.dataCollection = [
-                    {id: 0, secondProperty: true, thirdProperty: 2},
-                    {id: 1, secondProperty: true, thirdProperty: 3},
-                    {id: 2, secondProperty: true, thirdProperty: 1}
+                    {id: 0, secondProperty: true, thirdProperty: 2, more: {another: 'test'}},
+                    {id: 1, secondProperty: true, thirdProperty: 3, more: {another: 'test'}},
+                    {id: 2, secondProperty: true, thirdProperty: 1, more: {another: 'test'}}
                 ];
             });
 
             it('should update the proper data row with the proper value', function () {
                 ctrl.updateDataRow(scope.displayedCollection[0], 'id', 34);
                 expect(scope.displayedCollection).toEqual([
-                    {id: 34, secondProperty: true, thirdProperty: 2},
-                    {id: 1, secondProperty: true, thirdProperty: 3},
-                    {id: 2, secondProperty: true, thirdProperty: 1}
+                    {id: 34, secondProperty: true, thirdProperty: 2, more: {another: 'test'}},
+                    {id: 1, secondProperty: true, thirdProperty: 3, more: {another: 'test'}},
+                    {id: 2, secondProperty: true, thirdProperty: 1, more: {another: 'test'}}
                 ]);
 
                 expect(scope.dataCollection).toEqual([
-                    {id: 34, secondProperty: true, thirdProperty: 2},
-                    {id: 1, secondProperty: true, thirdProperty: 3},
-                    {id: 2, secondProperty: true, thirdProperty: 1}
+                    {id: 34, secondProperty: true, thirdProperty: 2, more: {another: 'test'}},
+                    {id: 1, secondProperty: true, thirdProperty: 3, more: {another: 'test'}},
+                    {id: 2, secondProperty: true, thirdProperty: 1, more: {another: 'test'}}
                 ]);
             });
 
             it('should not update any data Row', function () {
                 ctrl.updateDataRow({id: 1, secondProperty: true, thirdProperty: 2}, 'id', 34);
                 expect(scope.displayedCollection).toEqual([
-                    {id: 0, secondProperty: true, thirdProperty: 2},
-                    {id: 1, secondProperty: true, thirdProperty: 3},
-                    {id: 2, secondProperty: true, thirdProperty: 1}
+                    {id: 0, secondProperty: true, thirdProperty: 2, more: {another: 'test'}},
+                    {id: 1, secondProperty: true, thirdProperty: 3, more: {another: 'test'}},
+                    {id: 2, secondProperty: true, thirdProperty: 1, more: {another: 'test'}}
                 ]);
 
                 expect(scope.dataCollection).toEqual([
-                    {id: 0, secondProperty: true, thirdProperty: 2},
-                    {id: 1, secondProperty: true, thirdProperty: 3},
-                    {id: 2, secondProperty: true, thirdProperty: 1}
+                    {id: 0, secondProperty: true, thirdProperty: 2, more: {another: 'test'}},
+                    {id: 1, secondProperty: true, thirdProperty: 3, more: {another: 'test'}},
+                    {id: 2, secondProperty: true, thirdProperty: 1, more: {another: 'test'}}
                 ]);
             });
 
             it('should "create" a new property on the proper dataRow ', function () {
                 ctrl.updateDataRow(scope.displayedCollection[0], 'newProp', 'value');
                 expect(scope.displayedCollection).toEqual([
-                    {id: 0, secondProperty: true, thirdProperty: 2, newProp: 'value'},
-                    {id: 1, secondProperty: true, thirdProperty: 3},
-                    {id: 2, secondProperty: true, thirdProperty: 1}
+                    {id: 0, secondProperty: true, thirdProperty: 2, more: {another: 'test'}, newProp: 'value'},
+                    {id: 1, secondProperty: true, thirdProperty: 3, more: {another: 'test'}},
+                    {id: 2, secondProperty: true, thirdProperty: 1, more: {another: 'test'}}
                 ]);
 
                 expect(scope.dataCollection).toEqual([
-                    {id: 0, secondProperty: true, thirdProperty: 2, newProp: 'value'},
-                    {id: 1, secondProperty: true, thirdProperty: 3},
-                    {id: 2, secondProperty: true, thirdProperty: 1}
+                    {id: 0, secondProperty: true, thirdProperty: 2, more: {another: 'test'}, newProp: 'value'},
+                    {id: 1, secondProperty: true, thirdProperty: 3, more: {another: 'test'}},
+                    {id: 2, secondProperty: true, thirdProperty: 1, more: {another: 'test'}}
+                ]);
+            });
+
+            it('should work on multilevel object', function () {
+                ctrl.updateDataRow(scope.displayedCollection[0], 'more.another', 'validateTest');
+                expect(scope.displayedCollection).toEqual([
+                    {id: 0, secondProperty: true, thirdProperty: 2, more: {another: 'validateTest'}},
+                    {id: 1, secondProperty: true, thirdProperty: 3, more: {another: 'test'}},
+                    {id: 2, secondProperty: true, thirdProperty: 1, more: {another: 'test'}}
+                ]);
+
+                expect(scope.dataCollection).toEqual([
+                    {id: 0, secondProperty: true, thirdProperty: 2, more: {another: 'validateTest'}},
+                    {id: 1, secondProperty: true, thirdProperty: 3, more: {another: 'test'}},
+                    {id: 2, secondProperty: true, thirdProperty: 1, more: {another: 'test'}}
                 ]);
             });
 
@@ -571,7 +624,6 @@ describe('Table module', function () {
                 ctrl.updateDataRow(scope.displayedCollection[0], 'id', 2);
                 expect(eventHandler.listener).toHaveBeenCalled();
             }));
-
         });
     });
 });

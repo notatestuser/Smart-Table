@@ -32,3 +32,30 @@
     * `selectionChange`
     * `udpateDataRow`
     * `pageChange`
+
+## v0.1.2
+* support multi-level object in column config like `map:'myNestedObject.subProperties`
+* change pagination directive name to avoid collision with angular-ui.bootstrap [popalexandruvasile](https://github.com/popalexandruvasile)
+* make module IE8 compatible. [pheuter](https://github.com/pheuter)
+    
+## v0.1.3
+* reset the selectionAll state on page change
+
+## v0.1.4
+* fix sync issue with the content of an item and its smart-table row
+
+## v0.1.5
+* add the clear column functionality
+
+## v0.1.6
+* modify filter to be compatible with 1.2.X branch
+
+## v0.1.7
+* ability to pass a rowFunction (thanks to [pheuter](https://github.com/lorenzofox3/Smart-Table/pull/57))
+
+## v0.1.8 
+* allow for HTML formatted cell contents: see pull request from TNGPS https://github.com/lorenzofox3/Smart-Table/pull/80
+
+## v0.1.9
+* fix sort ascent/descent definition
+* merge pull request from [morrog](https://github.com/morrog) about db click issue

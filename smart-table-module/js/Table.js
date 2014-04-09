@@ -2,7 +2,7 @@
 
 (function (angular) {
     "use strict";
-    angular.module('smartTable.table', ['smartTable.column', 'smartTable.utilities', 'smartTable.directives', 'smartTable.filters', 'ui.bootstrap.pagination'])
+    angular.module('smartTable.table', ['smartTable.column', 'smartTable.utilities', 'smartTable.directives', 'smartTable.filters', 'ui.bootstrap.pagination.smartTable'])
         .constant('DefaultTableConfiguration', {
             selectionMode: 'none',
             isGlobalSearchActivated: false,
@@ -15,23 +15,32 @@
             sortAlgorithm: '',
             filterAlgorithm: ''
         })
-        .controller('TableCtrl', ['$scope', 'Column', '$filter', 'ArrayUtility', 'DefaultTableConfiguration', function (scope, Column, filter, arrayUtility, defaultConfig) {
+        .controller('TableCtrl', ['$scope', 'Column', '$filter', '$parse', 'ArrayUtility', 'DefaultTableConfiguration', function (scope, Column, filter, parse, arrayUtility, defaultConfig) {
 
             scope.columns = [];
             scope.dataCollection = scope.dataCollection || [];
             scope.displayedCollection = []; //init empty array so that if pagination is enabled, it does not spoil performances
             scope.numberOfPages = calculateNumberOfPages(scope.dataCollection);
             scope.currentPage = 1;
+            scope.holder = {isAllSelected: false};
 
             var predicate = {},
                 lastColumnSort;
 
+            function isAllSelected() {
+                var i,
+                    l = scope.displayedCollection.length;
+                for (i = 0; i < l; i++) {
+                    if (scope.displayedCollection[i].isSelected !== true) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
             function calculateNumberOfPages(array) {
 
-                if (!angular.isArray(array)) {
-                    return 1;
-                }
-                if (array.length === 0 || scope.itemsByPage < 1) {
+                if (!angular.isArray(array) || array.length === 0 || scope.itemsByPage < 1) {
                     return 1;
                 }
                 return Math.ceil(array.length / scope.itemsByPage);
@@ -67,6 +76,7 @@
                         }
                     }
                     dataRow.isSelected = select;
+                    scope.holder.isAllSelected = isAllSelected();
                     scope.$emit('selectionChange', {item: dataRow});
                 }
             }
@@ -88,6 +98,7 @@
                 if (angular.isNumber(page.page)) {
                     scope.currentPage = page.page;
                     scope.displayedCollection = this.pipe(scope.dataCollection);
+                    scope.holder.isAllSelected = isAllSelected();
                     scope.$emit('changePage', {oldValue: oldPage, newValue: scope.currentPage});
                 }
             };
@@ -124,20 +135,11 @@
 
                 //update column and global predicate
                 if (column && scope.columns.indexOf(column) !== -1) {
-                    predicate.$ = '';
-                    column.filterPredicate = input;
+                    predicate[column.map] = input;
                 } else {
-                    for (var j = 0, l = scope.columns.length; j < l; j++) {
-                        scope.columns[j].filterPredicate = '';
-                    }
-                    predicate.$ = input;
-                }
-
-                for (var j = 0, l = scope.columns.length; j < l; j++) {
-                    predicate[scope.columns[j].map] = scope.columns[j].filterPredicate;
+                    predicate = {$: input};
                 }
                 scope.displayedCollection = this.pipe(scope.dataCollection);
-
             };
 
             /**
@@ -186,6 +188,12 @@
                 arrayUtility.moveAt(scope.columns, oldIndex, newIndex);
             };
 
+            /**
+             * remove all columns
+             */
+            this.clearColumns = function () {
+                scope.columns.length = 0;
+            };
 
             /*///////////
              ROW API
@@ -245,19 +253,18 @@
              */
             this.updateDataRow = function (dataRow, propertyName, newValue) {
                 var index = scope.displayedCollection.indexOf(dataRow),
+                    getter = parse(propertyName),
+                    setter = getter.assign,
                     oldValue;
                 if (index !== -1) {
-                    oldValue = scope.displayedCollection[index][propertyName];
+                    oldValue = getter(scope.displayedCollection[index]);
                     if (oldValue !== newValue) {
-                        scope.displayedCollection[index][propertyName] = newValue;
+                        setter(scope.displayedCollection[index], newValue);
                         scope.$emit('updateDataRow', {item: scope.displayedCollection[index]});
                     }
                 }
             };
-
-
         }]);
-
 })(angular);
 
 

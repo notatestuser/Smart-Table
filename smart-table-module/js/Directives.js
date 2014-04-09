@@ -4,7 +4,7 @@
     angular.module('smartTable.directives', ['smartTable.templateUrlList', 'smartTable.templates'])
         .directive('smartTable', ['templateUrlList', 'DefaultTableConfiguration', function (templateList, defaultConfig) {
             return {
-                restrict: 'E',
+                restrict: 'EA',
                 scope: {
                     columnCollection: '=columns',
                     dataCollection: '=rows',
@@ -37,8 +37,10 @@
                     }, true);
 
                     //insert columns from column config
-                    //TODO add a way to clean all columns
                     scope.$watch('columnCollection', function (oldValue, newValue) {
+
+                        ctrl.clearColumns();
+
                         if (scope.columnCollection) {
                             for (var i = 0, l = scope.columnCollection.length; i < l; i++) {
                                 ctrl.insertColumn(scope.columnCollection[i]);
@@ -62,7 +64,6 @@
                             ctrl.sortBy();//it will trigger the refresh... some hack ?
                         }
                     });
-
                 }
             };
         }])
@@ -73,7 +74,14 @@
                 require: '^smartTable',
                 restrict: 'C',
                 link: function (scope, element, attr, ctrl) {
-
+                    
+                    var _config;
+                    if ((_config = scope.config) != null) {
+                        if (typeof _config.rowFunction === "function") {
+                            _config.rowFunction(scope, element, attr, ctrl);
+                        }
+                    }
+                    
                     element.bind('click', function () {
                         scope.$apply(function () {
                             ctrl.toggleSelection(scope.dataRow);
@@ -99,14 +107,10 @@
             return {
                 restrict: 'C',
                 require: '^smartTable',
-                scope: {},
                 link: function (scope, element, attr, ctrl) {
-                    scope.isChecked = false;
-                    scope.$watch('isChecked', function (newValue, oldValue) {
-                        if (newValue !== oldValue) {
-                            ctrl.toggleSelectionAll(newValue);
-                        }
-                    });
+                    element.bind('click', function (event) {
+                        ctrl.toggleSelectionAll(element[0].checked === true);
+                    })
                 }
             };
         })
@@ -144,26 +148,32 @@
         }])
         //a customisable cell (see templateUrl) and editable
         //TODO check with the ng-include strategy
-        .directive('smartTableDataCell', ['$filter', '$http', '$templateCache', '$compile', function (filter, http, templateCache, compile) {
+        .directive('smartTableDataCell', ['$filter', '$http', '$templateCache', '$compile', '$parse', function (filter, http, templateCache, compile, parse) {
             return {
                 restrict: 'C',
                 link: function (scope, element) {
                     var
                         column = scope.column,
+                        isSimpleCell = !column.isEditable,
                         row = scope.dataRow,
                         format = filter('format'),
+                        getter = parse(column.map),
                         childScope;
 
                     //can be useful for child directives
-                    scope.formatedValue = format(row[column.map], column.formatFunction, column.formatParameter);
+                    scope.$watch('dataRow', function (value) {
+                        scope.formatedValue = format(getter(row), column.formatFunction, column.formatParameter);
+                        if (isSimpleCell === true) {
+                            element.html(scope.formatedValue);
+                        }
+                    }, true);
 
                     function defaultContent() {
-                        //clear content
                         if (column.isEditable) {
-                            element.html('<editable-cell row="dataRow" column="column" type="column.type" value="dataRow[column.map]"></editable-cell>');
+                            element.html('<div editable-cell="" row="dataRow" column="column" type="column.type"></div>');
                             compile(element.contents())(scope);
                         } else {
-                            element.text(scope.formatedValue);
+                            element.html(scope.formatedValue);
                         }
                     }
 
@@ -172,6 +182,8 @@
                         if (value) {
                             //we have to load the template (and cache it) : a kind of ngInclude
                             http.get(value, {cache: templateCache}).success(function (response) {
+
+                                isSimpleCell = false;
 
                                 //create a scope
                                 childScope = scope.$new();
@@ -188,22 +200,21 @@
             };
         }])
         //directive that allows type to be bound in input
-        .directive('inputType', ['$parse', function (parse) {
+        .directive('inputType', function () {
             return {
                 restrict: 'A',
                 priority: 1,
                 link: function (scope, ielement, iattr) {
                     //force the type to be set before inputDirective is called
-                    var getter = parse(iattr.type),
-                        type = getter(scope);
+                    var type = scope.$eval(iattr.type);
                     iattr.$set('type', type);
                 }
             };
-        }])
+        })
         //an editable content in the context of a cell (see row, column)
-        .directive('editableCell', ['templateUrlList', function (templateList) {
+        .directive('editableCell', ['templateUrlList', '$parse', function (templateList, parse) {
             return {
-                restrict: 'E',
+                restrict: 'EA',
                 require: '^smartTable',
                 templateUrl: templateList.editableCell,
                 scope: {
@@ -214,27 +225,32 @@
                 replace: true,
                 link: function (scope, element, attrs, ctrl) {
                     var form = angular.element(element.children()[1]),
-                        input = angular.element(form.children()[0]);
+                        input = angular.element(form.children()[0]),
+                        getter = parse(scope.column.map);
 
                     //init values
                     scope.isEditMode = false;
+                    scope.$watch('row', function () {
+                        scope.value = getter(scope.row);
+                    }, true);
+
 
                     scope.submit = function () {
                         //update model if valid
                         if (scope.myForm.$valid === true) {
-                            ctrl.updateDataRow(scope.row,scope.column.map,scope.value);
+                            ctrl.updateDataRow(scope.row, scope.column.map, scope.value);
                             ctrl.sortBy();//it will trigger the refresh...  (ie it will sort, filter, etc with the new value)
                         }
-                        scope.isEditMode = false;
+                        scope.toggleEditMode();
                     };
 
                     scope.toggleEditMode = function () {
-                        scope.value = scope.row[scope.column.map];
-                        scope.isEditMode = true;
+                        scope.value = getter(scope.row);
+                        scope.isEditMode = scope.isEditMode !== true;
                     };
 
-                    scope.$watch('isEditMode', function (newValue, oldValue) {
-                        if (newValue) {
+                    scope.$watch('isEditMode', function (newValue) {
+                        if (newValue === true) {
                             input[0].select();
                             input[0].focus();
                         }
