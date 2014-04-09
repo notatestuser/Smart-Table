@@ -1,14 +1,10 @@
 {
   "name": "angular-smart-table",
   "description": "A grid/table module for angular js",
-  "version": "0.1.1-kanso.1",
+  "version": "0.1.9-kanso.1",
   "categories": ["Frontend", "Forms"],
   "url": "http://lorenzofox3.github.io/smart-table-website/",
   "maintainers": [
-    {
-      "name": "Laurent Renard",
-      "url":  "https://github.com/lorenzofox3"
-    },
     {
       "name": "Luke Plaster",
       "url":  "https://github.com/notatestuser"
@@ -22,6 +18,5 @@
     "angular": "1.0.x"
   },
   "modules": "Smart-Table.debug.js",
-  "modules_attachment": false,
-  "gitHead": "5ada7142a624285aff4d44a90d164fe8dd2d6ba8"
+  "modules_attachment": false
 }
